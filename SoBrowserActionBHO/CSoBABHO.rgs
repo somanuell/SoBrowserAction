@@ -1,0 +1,54 @@
+HKCR
+{
+	NoRemove CLSID
+	{
+		ForceRemove {C1A74118-CCA4-4E9D-928D-88385ECD2382} = s 'CSoBABHO Class'
+		{
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			TypeLib = s '{BCC617EF-FD08-4EE7-89C7-DA25D925487B}'
+			Version = s '1.0'
+		}
+	}
+}
+
+HKLM {
+  NoRemove SOFTWARE {
+    NoRemove Microsoft {
+      NoRemove Windows {
+        NoRemove CurrentVersion {
+          NoRemove Explorer {
+            NoRemove 'Browser Helper Objects' {
+              ForceRemove '{C1A74118-CCA4-4E9D-928D-88385ECD2382}' = s 'So Browser Action BHO' {
+                val 'NoExplorer' = d '1'
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+HKLM {
+    NoRemove SOFTWARE {
+        NoRemove Microsoft {
+            NoRemove 'Internet Explorer' {
+                NoRemove 'Low Rights' {
+                    NoRemove ElevationPolicy {
+                        ForceRemove '{AE6E5BFE-B965-41B5-AC70-D7069E555C76}' {
+                            val AppName = s 'SoBrowserActionInjector.exe'
+                            val AppPath = s '%MODULEPATH%'
+                            val Policy = d '3'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
