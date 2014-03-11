@@ -4,7 +4,7 @@
 
 
  /* File created by MIDL compiler version 7.00.0555 */
-/* at Tue Mar 11 17:11:35 2014
+/* at Tue Mar 11 18:45:08 2014
  */
 /* Compiler settings for SoBrowserActionBHO.idl:
     Oicf, W1, Zp8, env=Win32 (32b run), target_arch=X86 7.00.0555 
