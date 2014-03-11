@@ -25,7 +25,7 @@ class ATL_NO_VTABLE CCSoBABHO :
 	public IDispatchImpl<ICSoBABHO, &IID_ICSoBABHO, &LIBID_SoBrowserActionBHOLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 public:
-	CCSoBABHO() : m_hWndPrivate( 0 )
+	CCSoBABHO() : m_hWndPrivate( 0 ), m_dwBrowserEventsCookie( 0 ), m_hWndIEFrame( 0 )
 	{
 	}
 
@@ -60,6 +60,7 @@ END_COM_MAP()
 	}
 
 	STDMETHOD(SetSite)(IUnknown *pUnkSite);
+	STDMETHOD(Invoke)(DISPID, REFIID, LCID, WORD, DISPPARAMS*, VARIANT*, EXCEPINFO*, UINT*);
 
 	static HMODULE sm_hInstance;
 	static DWORD sm_dwTlsIndex;
@@ -84,6 +85,9 @@ private:
 	void DestroyPrivateWindow( void ) {
 		if ( m_hWndPrivate ) DestroyWindow( m_hWndPrivate );
 	};
+	void LaunchMediumProcess( void );
+	DWORD m_dwBrowserEventsCookie;
+
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(CSoBABHO), CCSoBABHO)

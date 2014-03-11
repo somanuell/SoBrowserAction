@@ -90,27 +90,17 @@ STDMETHODIMP CCSoBABHO::SetSite( IUnknown* pUnkSite ) {
 				bool bSuccess = CreatePrivateWindow();
 				if ( bSuccess ) {
 					m_hWndIEFrame = reinterpret_cast<HWND>( hWndIEFrame );
-					wchar_t szFullPath[ MAX_PATH ];
-					wcscpy_s( szFullPath, sm_szModulePath );
-					wcscat_s( szFullPath, L"\\SoBrowserActionInjector.exe" );
-					STARTUPINFO si;
-					memset( &si, 0, sizeof( si ) );
-					si.cb = sizeof( si );
-					PROCESS_INFORMATION pi;
-					wchar_t szCommandLine[ 128 ];
-					swprintf_s( szCommandLine, L"SoBrowserActionInjector.exe %u", (DWORD32)hWndIEFrame );
-					BOOL bWin32Success = CreateProcess( szFullPath, szCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
-					if ( bWin32Success ) {
-						CloseHandle( pi.hThread );
-						CloseHandle( pi.hProcess );
-					}
+					LaunchMediumProcess();
 				}
 			}
+			HRESULT hr = AtlAdvise( m_spIWebBrowser2, reinterpret_cast<IUnknown*>(this), DIID_DWebBrowserEvents2, &m_dwBrowserEventsCookie );
+			if ( FAILED( hr ) ) m_dwBrowserEventsCookie = 0;
 		}
 
 	} else {
 
 		DestroyPrivateWindow();
+		if ( m_dwBrowserEventsCookie ) AtlUnadvise( m_spIWebBrowser2, DIID_DWebBrowserEvents2, m_dwBrowserEventsCookie );
 		m_spIWebBrowser2.Release();
 
 	}
@@ -265,6 +255,57 @@ void CCSoBABHO::OnActionClick( WPARAM wParam, LPARAM lParam ) {
 
 	return;
 
+}
+
+STDMETHODIMP CCSoBABHO::Invoke( DISPID dispidMember, REFIID riid, LCID lcid, WORD wFlags,
+                                    DISPPARAMS * pDispParams, VARIANT * pvarResult,
+                                    EXCEPINFO*  pExcepInfo,  UINT * puArgErr ) {
+
+	riid, lcid, wFlags, pvarResult, pExcepInfo, puArgErr;
+
+	switch( dispidMember ) {
+
+		case DISPID_WINDOWSTATECHANGED: {
+			OutputDebugString( L"DISPID_WINDOWSTATECHANGED\n" );
+			LONG lFlags = pDispParams->rgvarg[ 1 ].lVal;
+			LONG lValidFlagsMask = pDispParams->rgvarg[ 0 ].lVal;
+			LONG lEnabledUserVisible = OLECMDIDF_WINDOWSTATE_USERVISIBLE | OLECMDIDF_WINDOWSTATE_ENABLED;
+			if ( ( lValidFlagsMask & lEnabledUserVisible ) == lEnabledUserVisible ) {
+				SHANDLE_PTR hWndIEFrame = 0;
+				HRESULT hr = m_spIWebBrowser2->get_HWND( &hWndIEFrame );
+				if ( SUCCEEDED( hr ) && hWndIEFrame ) {
+					if ( reinterpret_cast<HWND>( hWndIEFrame ) != m_hWndIEFrame ) {
+						m_hWndIEFrame = reinterpret_cast<HWND>( hWndIEFrame );
+						OutputDebugString( L"Launching NEW PROCESS\n" );
+						LaunchMediumProcess();
+					}
+				}
+			}
+			break;
+		}
+
+	}
+
+	return S_OK;
+
+}
+
+void CCSoBABHO::LaunchMediumProcess( void ) {
+
+	wchar_t szFullPath[ MAX_PATH ];
+	wcscpy_s( szFullPath, sm_szModulePath );
+	wcscat_s( szFullPath, L"\\SoBrowserActionInjector.exe" );
+	STARTUPINFO si;
+	memset( &si, 0, sizeof( si ) );
+	si.cb = sizeof( si );
+	PROCESS_INFORMATION pi;
+	wchar_t szCommandLine[ 128 ];
+	swprintf_s( szCommandLine, L"SoBrowserActionInjector.exe %u", (DWORD32)m_hWndIEFrame );
+	BOOL bWin32Success = CreateProcess( szFullPath, szCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
+	if ( bWin32Success ) {
+		CloseHandle( pi.hThread );
+		CloseHandle( pi.hProcess );
+	}
 }
 
 // CCSoBABHO
